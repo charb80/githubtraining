@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz Marvel – Pour les Super-Héros !</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Arial Rounded MT Bold', Arial, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    /* Stars background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-image:
+        radial-gradient(2px 2px at 10% 15%, #fff 0%, transparent 100%),
+        radial-gradient(2px 2px at 25% 40%, #fff 0%, transparent 100%),
+        radial-gradient(2px 2px at 50% 10%, #fff 0%, transparent 100%),
+        radial-gradient(2px 2px at 75% 60%, #fff 0%, transparent 100%),
+        radial-gradient(2px 2px at 90% 30%, #fff 0%, transparent 100%),
+        radial-gradient(2px 2px at 35% 80%, #fff 0%, transparent 100%),
+        radial-gradient(2px 2px at 60% 90%, #fff 0%, transparent 100%),
+        radial-gradient(2px 2px at 80% 5%, #fff 0%, transparent 100%);
+      opacity: 0.4;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 700px;
+    }
+
+    /* HEADER */
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .header h1 {
+      font-size: 2.4rem;
+      color: #ffd700;
+      text-shadow: 0 0 20px #ff6b00, 3px 3px 0 #c8000a;
+      letter-spacing: 2px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .header .subtitle {
+      color: #e0e0e0;
+      font-size: 1.1rem;
+      margin-top: 6px;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.03); }
+    }
+
+    /* SCORE */
+    .score-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255,255,255,0.1);
+      border-radius: 50px;
+      padding: 10px 24px;
+      margin-bottom: 20px;
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    .score-bar .score {
+      color: #ffd700;
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+
+    .score-bar .progress {
+      color: #aad4f5;
+      font-size: 1rem;
+    }
+
+    /* CARD DE QUESTION */
+    .question-card {
+      background: rgba(255,255,255,0.07);
+      border-radius: 24px;
+      padding: 32px 28px;
+      text-align: center;
+      border: 2px solid rgba(255,215,0,0.3);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      margin-bottom: 20px;
+      animation: slideIn 0.4s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero-emoji {
+      font-size: 5rem;
+      margin-bottom: 16px;
+      display: block;
+      animation: bounce 1.5s ease-in-out infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .question-text {
+      font-size: 1.6rem;
+      color: #ffffff;
+      line-height: 1.4;
+      margin-bottom: 8px;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    }
+
+    .hint {
+      font-size: 1rem;
+      color: #aad4f5;
+      margin-bottom: 4px;
+      font-style: italic;
+    }
+
+    /* GRILLE DE RÉPONSES */
+    .answers-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .answer-btn {
+      background: linear-gradient(135deg, #1c3a6b, #0a2240);
+      border: 3px solid rgba(255,255,255,0.2);
+      border-radius: 20px;
+      padding: 18px 12px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s ease;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    .answer-btn:hover:not(:disabled) {
+      transform: translateY(-4px) scale(1.03);
+      border-color: #ffd700;
+      box-shadow: 0 8px 24px rgba(255,215,0,0.3);
+      background: linear-gradient(135deg, #254a8a, #1a3360);
+    }
+
+    .answer-btn:active:not(:disabled) {
+      transform: scale(0.97);
+    }
+
+    .answer-btn .btn-emoji {
+      font-size: 2.8rem;
+    }
+
+    .answer-btn .btn-name {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #e0e0e0;
+    }
+
+    .answer-btn.correct {
+      background: linear-gradient(135deg, #1a6b2a, #0f4a1c) !important;
+      border-color: #4ade80 !important;
+      box-shadow: 0 0 20px rgba(74,222,128,0.5) !important;
+      transform: scale(1.05);
+      animation: correctAnim 0.5s ease;
+    }
+
+    @keyframes correctAnim {
+      0% { transform: scale(1.05); }
+      50% { transform: scale(1.12); }
+      100% { transform: scale(1.05); }
+    }
+
+    .answer-btn.wrong {
+      background: linear-gradient(135deg, #6b1a1a, #4a0f0f) !important;
+      border-color: #f87171 !important;
+      box-shadow: 0 0 20px rgba(248,113,113,0.4) !important;
+      animation: shake 0.4s ease;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-8px); }
+      75% { transform: translateX(8px); }
+    }
+
+    .answer-btn:disabled { cursor: not-allowed; opacity: 0.8; }
+
+    /* FEEDBACK */
+    .feedback {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+      min-height: 48px;
+      padding: 10px;
+      border-radius: 14px;
+      margin-bottom: 12px;
+      transition: all 0.3s ease;
+    }
+
+    .feedback.correct-msg {
+      color: #4ade80;
+      background: rgba(74,222,128,0.1);
+      border: 2px solid rgba(74,222,128,0.3);
+    }
+
+    .feedback.wrong-msg {
+      color: #f87171;
+      background: rgba(248,113,113,0.1);
+      border: 2px solid rgba(248,113,113,0.3);
+    }
+
+    .feedback.hidden { opacity: 0; }
+
+    /* BOUTON SUIVANT */
+    .next-btn {
+      display: none;
+      width: 100%;
+      background: linear-gradient(135deg, #c8000a, #ff0019);
+      color: white;
+      border: none;
+      border-radius: 18px;
+      padding: 16px;
+      font-size: 1.3rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 16px rgba(200,0,10,0.5);
+      letter-spacing: 1px;
+    }
+
+    .next-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 24px rgba(200,0,10,0.6);
+      background: linear-gradient(135deg, #e0000c, #ff3333);
+    }
+
+    .next-btn.visible { display: block; animation: slideIn 0.3s ease; }
+
+    /* ÉCRAN DE FIN */
+    .end-screen {
+      display: none;
+      text-align: center;
+      background: rgba(255,255,255,0.07);
+      border-radius: 24px;
+      padding: 40px 28px;
+      border: 2px solid rgba(255,215,0,0.4);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      animation: slideIn 0.5s ease;
+    }
+
+    .end-screen.visible { display: block; }
+
+    .end-trophy { font-size: 6rem; margin-bottom: 12px; }
+
+    .end-title {
+      font-size: 2rem;
+      color: #ffd700;
+      text-shadow: 3px 3px 0 #c8000a;
+      margin-bottom: 12px;
+    }
+
+    .end-score {
+      font-size: 1.4rem;
+      color: #e0e0e0;
+      margin-bottom: 24px;
+    }
+
+    .end-message {
+      font-size: 1.2rem;
+      color: #aad4f5;
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+
+    .restart-btn {
+      background: linear-gradient(135deg, #ffd700, #ff9900);
+      color: #1a1a2e;
+      border: none;
+      border-radius: 18px;
+      padding: 16px 40px;
+      font-size: 1.3rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 16px rgba(255,153,0,0.5);
+    }
+
+    .restart-btn:hover {
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 8px 24px rgba(255,153,0,0.6);
+    }
+
+    /* Confettis */
+    .confetti-container {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 999;
+      overflow: hidden;
+    }
+
+    .confetti-piece {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      top: -20px;
+      border-radius: 2px;
+      animation: confettiFall linear forwards;
+    }
+
+    @keyframes confettiFall {
+      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* Responsive */
+    @media (max-width: 480px) {
+      .header h1 { font-size: 1.8rem; }
+      .question-text { font-size: 1.3rem; }
+      .hero-emoji { font-size: 4rem; }
+      .answer-btn .btn-emoji { font-size: 2.2rem; }
+      .answer-btn .btn-name { font-size: 0.95rem; }
+      .answers-grid { gap: 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="confetti-container" id="confettiContainer"></div>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header">
+    <h1>⚡ Quiz Marvel ⚡</h1>
+    <div class="subtitle">Tu connais tes super-héros ? 🦸</div>
+  </div>
+
+  <!-- JEU -->
+  <div id="gameArea">
+    <!-- Score -->
+    <div class="score-bar">
+      <div class="score">⭐ Score : <span id="scoreDisplay">0</span></div>
+      <div class="progress">Question <span id="qNum">1</span> / <span id="qTotal">10</span></div>
+    </div>
+
+    <!-- Carte de question -->
+    <div class="question-card" id="questionCard">
+      <span class="hero-emoji" id="heroEmoji"></span>
+      <div class="question-text" id="questionText"></div>
+      <div class="hint" id="hintText"></div>
+    </div>
+
+    <!-- Réponses -->
+    <div class="answers-grid" id="answersGrid"></div>
+
+    <!-- Feedback -->
+    <div class="feedback hidden" id="feedback"></div>
+
+    <!-- Bouton suivant -->
+    <button class="next-btn" id="nextBtn" onclick="nextQuestion()">Suivant ➡️</button>
+  </div>
+
+  <!-- ÉCRAN DE FIN -->
+  <div class="end-screen" id="endScreen">
+    <div class="end-trophy" id="endTrophy"></div>
+    <div class="end-title" id="endTitle"></div>
+    <div class="end-score" id="endScore"></div>
+    <div class="end-message" id="endMessage"></div>
+    <button class="restart-btn" onclick="restartGame()">🔄 Rejouer !</button>
+  </div>
+
+</div>
+
+<script>
+  // =============================================
+  // BANQUE DE QUESTIONS
+  // =============================================
+  const allQuestions = [
+    {
+      emoji: "🕷️",
+      question: "Qui lance des toiles d'araignée ?",
+      hint: "Il est rouge et bleu !",
+      correct: "Spider-Man",
+      answers: ["Spider-Man", "Iron Man", "Thor", "Hulk"],
+      correctEmoji: "🕷️",
+      wrongEmoji: "😅"
+    },
+    {
+      emoji: "🦾",
+      question: "Qui porte une armure rouge et or ?",
+      hint: "Il dit 'Je suis Iron Man !'",
+      correct: "Iron Man",
+      answers: ["Captain America", "Iron Man", "Thor", "Black Panther"],
+      correctEmoji: "🦾",
+      wrongEmoji: "😅"
+    },
+    {
+      emoji: "💚",
+      question: "Qui devient vert et très grand quand il est en colère ?",
+      hint: "Il est vraiment très costaud !",
+      correct: "Hulk",
+      answers: ["Spider-Man", "Thor", "Hulk", "Ant-Man"],
+      correctEmoji: "💪",
+      wrongEmoji: "😅"
+    },
+    {
+      emoji: "⚡",
+      question: "Qui a un marteau magique et fait des éclairs ?",
+      hint: "C'est le dieu du tonnerre !",
+      correct: "Thor",
+      answers: ["Hulk", "Thor", "Iron Man", "Captain America"],
+      correctEmoji: "⚡",
+      wrongEmoji: "😅"
+    },
+    {
+      emoji: "🛡️",
+      question: "Qui lance un bouclier rond rouge, blanc et bleu ?",
+      hint: "Il aime l'Amérique !",
+      correct: "Captain America",
+      answers: ["Captain America", "Iron Man", "Black Panther", "Hulk"],
+      correctEmoji: "🛡️",
+      wrongEmoji: "😅"
+    },
+    {
+      emoji: "🐾",
+      question: "Qui est le roi du Wakanda et porte une armure noire ?",
+      hint: "Il court comme une panthère !",
+      correct: "Black Panther",
+      answers: ["Thor", "Spider-Man", "Black Panther", "Iron Man"],
+      correctEmoji: "🐾",
+      wrongEmoji: "😅"
+    },
+    {
+      emoji: "🐜",
+      question: "Qui peut rapetisser comme une fourmi ?",
+      hint: "Il parle aux insectes !",
+      correct: "Ant-Man",
+      answers: ["Ant-Man", "Hulk", "Captain America", "Thor"],
+      correctEmoji: "🐜",
+      wrongEmoji: "😅"
+    },
+    {
+      emoji: "🪄",
+      question: "Qui est le gardien des pierres du temps avec une cape rouge ?",
+      hint: "Il est un super sorcier !",
+      correct: "Doctor Strange",
+      answers: ["Thor", "Doctor Strange", "Iron Man", "Black Panther"],
+      correctEmoji: "🪄",
+      wrongEmoji: "😅"
+    },
+    {
+      emoji: "🏹",
+      question: "Qui tire des flèches et ne rate jamais sa cible ?",
+      hint: "Il utilise un arc !",
+      correct: "Hawkeye",
+      answers: ["Hawkeye", "Thor", "Spider-Man", "Captain America"],
+      correctEmoji: "🏹",
+      wrongEmoji: "😅"
+    },
+    {
+      emoji: "🚀",
+      question: "Quel petit raton laveur est gardien de la galaxie ?",
+      hint: "Il s'appelle Rocket !",
+      correct: "Rocket Raccoon",
+      answers: ["Groot", "Rocket Raccoon", "Hulk", "Ant-Man"],
+      correctEmoji: "🦝",
+      wrongEmoji: "😅"
+    },
+    {
+      emoji: "🌳",
+      question: "Qui est le grand arbre qui dit seulement 'Je s'appelle Groot' ?",
+      hint: "Il ressemble à un arbre marchant !",
+      correct: "Groot",
+      answers: ["Groot", "Hulk", "Thor", "Black Panther"],
+      correctEmoji: "🌳",
+      wrongEmoji: "😅"
+    },
+    {
+      emoji: "✨",
+      question: "Qui est la super-héroïne qui peut voler et est très forte ?",
+      hint: "Elle s'appelle Carol Danvers !",
+      correct: "Captain Marvel",
+      answers: ["Black Widow", "Captain Marvel", "Doctor Strange", "Iron Man"],
+      correctEmoji: "⭐",
+      wrongEmoji: "😅"
+    }
+  ];
+
+  // =============================================
+  // ÉTAT DU JEU
+  // =============================================
+  const QUESTIONS_PER_GAME = 10;
+  let questions = [];
+  let currentIndex = 0;
+  let score = 0;
+  let answered = false;
+
+  // =============================================
+  // DÉMARRAGE
+  // =============================================
+  function startGame() {
+    questions = shuffle([...allQuestions]).slice(0, QUESTIONS_PER_GAME);
+    currentIndex = 0;
+    score = 0;
+    answered = false;
+
+    document.getElementById('gameArea').style.display = 'block';
+    document.getElementById('endScreen').classList.remove('visible');
+    document.getElementById('qTotal').textContent = QUESTIONS_PER_GAME;
+
+    showQuestion();
+  }
+
+  function restartGame() {
+    startGame();
+  }
+
+  // =============================================
+  // AFFICHER UNE QUESTION
+  // =============================================
+  function showQuestion() {
+    answered = false;
+    const q = questions[currentIndex];
+
+    document.getElementById('scoreDisplay').textContent = score;
+    document.getElementById('qNum').textContent = currentIndex + 1;
+    document.getElementById('heroEmoji').textContent = q.emoji;
+    document.getElementById('questionText').textContent = q.question;
+    document.getElementById('hintText').textContent = '💡 ' + q.hint;
+
+    // Feedback caché
+    const fb = document.getElementById('feedback');
+    fb.textContent = '';
+    fb.className = 'feedback hidden';
+
+    // Bouton suivant caché
+    document.getElementById('nextBtn').classList.remove('visible');
+
+    // Mélanger les réponses
+    const shuffledAnswers = shuffle([...q.answers]);
+
+    const grid = document.getElementById('answersGrid');
+    grid.innerHTML = '';
+
+    shuffledAnswers.forEach(answer => {
+      const btn = document.createElement('button');
+      btn.className = 'answer-btn';
+      btn.innerHTML = `
+        <span class="btn-emoji">${getHeroEmoji(answer)}</span>
+        <span class="btn-name">${answer}</span>
+      `;
+      btn.onclick = () => handleAnswer(answer, q.correct, btn);
+      grid.appendChild(btn);
+    });
+  }
+
+  // =============================================
+  // GÉRER LA RÉPONSE
+  // =============================================
+  function handleAnswer(selected, correct, clickedBtn) {
+    if (answered) return;
+    answered = true;
+
+    const allBtns = document.querySelectorAll('.answer-btn');
+    allBtns.forEach(btn => btn.disabled = true);
+
+    const fb = document.getElementById('feedback');
+
+    if (selected === correct) {
+      score++;
+      clickedBtn.classList.add('correct');
+      fb.textContent = getCorrectMessage();
+      fb.className = 'feedback correct-msg';
+      launchConfetti();
+    } else {
+      clickedBtn.classList.add('wrong');
+      // Montrer la bonne réponse
+      allBtns.forEach(btn => {
+        if (btn.querySelector('.btn-name').textContent === correct) {
+          btn.classList.add('correct');
+        }
+      });
+      fb.textContent = getWrongMessage(correct);
+      fb.className = 'feedback wrong-msg';
+    }
+
+    document.getElementById('scoreDisplay').textContent = score;
+    document.getElementById('nextBtn').classList.add('visible');
+  }
+
+  // =============================================
+  // QUESTION SUIVANTE
+  // =============================================
+  function nextQuestion() {
+    currentIndex++;
+    if (currentIndex >= QUESTIONS_PER_GAME) {
+      showEndScreen();
+    } else {
+      showQuestion();
+    }
+  }
+
+  // =============================================
+  // ÉCRAN DE FIN
+  // =============================================
+  function showEndScreen() {
+    document.getElementById('gameArea').style.display = 'none';
+    const endScreen = document.getElementById('endScreen');
+    endScreen.classList.add('visible');
+
+    const pct = score / QUESTIONS_PER_GAME;
+    let trophy, title, message;
+
+    if (pct === 1) {
+      trophy = '🏆';
+      title = 'PARFAIT ! Tu es un vrai Avenger !';
+      message = 'Bravo super-héros ! Tu as tout juste ! Tu connais tous les Avengers !';
+    } else if (pct >= 0.7) {
+      trophy = '🥇';
+      title = 'Super ! Tu es incroyable !';
+      message = 'Wow ! Tu connais vraiment bien les super-héros Marvel ! Continue comme ça !';
+    } else if (pct >= 0.5) {
+      trophy = '🥈';
+      title = 'Bien joué ! Continue !';
+      message = 'Tu te débrouilles bien ! Rejoue et tu vas tout réussir !';
+    } else {
+      trophy = '🌟';
+      title = 'Bonne tentative !';
+      message = 'Ne t\'inquiète pas ! Continue d\'apprendre et tu deviendras le meilleur !';
+    }
+
+    document.getElementById('endTrophy').textContent = trophy;
+    document.getElementById('endTitle').textContent = title;
+    document.getElementById('endScore').textContent = `${score} bonne${score > 1 ? 's' : ''} réponse${score > 1 ? 's' : ''} sur ${QUESTIONS_PER_GAME} !`;
+    document.getElementById('endMessage').textContent = message;
+
+    if (pct >= 0.7) launchConfetti(120);
+  }
+
+  // =============================================
+  // UTILITAIRES
+  // =============================================
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function getHeroEmoji(name) {
+    const map = {
+      'Spider-Man': '🕷️',
+      'Iron Man': '🦾',
+      'Hulk': '💚',
+      'Thor': '⚡',
+      'Captain America': '🛡️',
+      'Black Panther': '🐾',
+      'Ant-Man': '🐜',
+      'Doctor Strange': '🪄',
+      'Hawkeye': '🏹',
+      'Rocket Raccoon': '🦝',
+      'Groot': '🌳',
+      'Captain Marvel': '⭐',
+      'Black Widow': '🕸️',
+    };
+    return map[name] || '🦸';
+  }
+
+  function getCorrectMessage() {
+    const msgs = [
+      '🎉 Bravo ! C\'est correct !',
+      '⭐ Super ! Tu es un champion !',
+      '🏆 Excellent ! Tu connais bien tes héros !',
+      '✨ Fantastique ! Bien joué !',
+      '💪 Parfait ! Tu es trop fort !',
+      '🎊 Génial ! Continue comme ça !',
+    ];
+    return msgs[Math.floor(Math.random() * msgs.length)];
+  }
+
+  function getWrongMessage(correct) {
+    return `😅 Pas tout à fait... C'était ${correct} !`;
+  }
+
+  // =============================================
+  // CONFETTIS
+  // =============================================
+  function launchConfetti(count = 60) {
+    const container = document.getElementById('confettiContainer');
+    const colors = ['#ffd700', '#ff0019', '#4ade80', '#60a5fa', '#f472b6', '#fb923c', '#a78bfa'];
+
+    for (let i = 0; i < count; i++) {
+      const piece = document.createElement('div');
+      piece.className = 'confetti-piece';
+      piece.style.left = Math.random() * 100 + 'vw';
+      piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+      piece.style.width = (8 + Math.random() * 12) + 'px';
+      piece.style.height = (8 + Math.random() * 12) + 'px';
+      piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      piece.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+      piece.style.animationDelay = (Math.random() * 0.5) + 's';
+      container.appendChild(piece);
+
+      piece.addEventListener('animationend', () => piece.remove());
+    }
+  }
+
+  // =============================================
+  // LANCEMENT
+  // =============================================
+  startGame();
+</script>
+
+</body>
+</html>
